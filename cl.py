@@ -5,6 +5,7 @@ from pptx import Presentation #lets us create presentation
 from pptx.util import Inches, Pt #lets us get pptx fonts, measurements etc
 import time #lets us pause for a certain time
 import requests # lets us download image from url
+import urllib
 import os # lets us execute console commands
 from datetime import datetime  
 from selenium import webdriver #lets us search the web
@@ -52,8 +53,9 @@ class powerpoint (object):
 	
 	def export (self): # Saves and exports file to folder
 		name = start.collegeName
-		file_name = '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + name + '.pptx'
-		prs.save(file_name)
+		#file_name = '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + 'slide.pptx'
+		#prs.save(os.path.join(file_name))
+		prs.save('slides.pptx')		
 
 	def add_image_page(self):
 		image_page_layout = prs.slide_layouts[6]
@@ -165,44 +167,50 @@ class college_scrapper (object):
 			image_url = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[2]/div[1]/div[2]/div[1]/a").get_attribute('href')	
 
 		
-		print 'Downloading Image...'
-		print image_url
-		try:
+		print 'Downloading Image...',
+#		try:
+		
+		self.collegeImageDir =  'image.png'
+		#	print self.collegeImageDir
+		#	photo = open(self.collegeImageDir, 'wb')
+		#	photo.write(requests.get(image_url).content)
+		#	photo.close()
 
-			self.collegeImageDir =  '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + 'image.png'
-			photo = open(self.collegeImageDir, 'wb')
-			photo.write(requests.get(image_url).content)
-			photo.close()
-			print 'Download Completed!'
+		photo = urllib.URLopener()
+		photo.retrieve(image_url, 'image.png')
+		print '\tOK'
 
-		except:
-			print 'Error downloading image'
-			print 'Placeholder is placed.  You can change it when editing file.'
-			
-			### THIS LINE DOESNT WORK
-			#self.collegeImageDir = '~/Programs/College-Loan-Web-Scrapper/placeholder.png'
-			#### DIRECTORY NOT FOUND ^ FIX !!!!
+#		except:
 
-			### REPLACEMENT FOR TIME BEING
-			self.collegeImageDir = 'placeholder.png'		
+#			print 'Error downloading image'
+#			print 'Placeholder is placed.  You can change it when editing file.'
+#			
+#			### THIS LINE DOESNT WORK
+#			#self.collegeImageDir = '~/Programs/College-Loan-Web-Scrapper/placeholder.png'
+#			#### DIRECTORY NOT FOUND ^ FIX !!!!
+#
+#			### REPLACEMENT FOR TIME BEING
+#			self.collegeImageDir = 'placeholder.png'		
 
 	def college_search (self):
 
 		college_input = raw_input('College: ')
 		college_input += ' college data'
-		print 'Loading...'
+		print 'Loading...',
 
 		time.sleep(2)
 		search_college = driver.find_element_by_name('q')
 		search_college.clear()
 		search_college.send_keys(college_input)
 		search_college.send_keys(Keys.RETURN)
-		print 'Searching...'
+		print '\tOK'
+		print 'Searching and collecting info...',
 		
 		time.sleep(3)
 		
 		try:
 			driver.find_element_by_partial_link_text('CollegeData').click()
+
 		except:
 			print 'Taking longer than usual... Slow internet?(1)'
 			time.sleep(3)
@@ -211,45 +219,54 @@ class college_scrapper (object):
         	        search_college.clear()
                 	search_college.send_keys(college_input)
                 	search_college.send_keys(Keys.RETURN)
-			time.sleep(3)
 
 			driver.find_element_by_partial_link_text('CollegeData').click()
-			#driver.find_element_by_xpath('//a[starts-with(@href, "/url?")]').click()
-		try:
-			print  driver.find_element_by_css_selector("*[class^='pagetitle']").text
-		except:
-			print 'Taking longer than usual... Slow internet?(2)'
-			time.sleep(5)
-			print  driver.find_element_by_css_selector("*[class^='pagetitle']").text
-		finally:
-			print 'Successfully found information'
+		time.sleep(5)		
 
 
 		##################################################################
 		#           		FIND COLLEGE INFORMATION 		 #
 		##################################################################
-		
-		self.collegeLocation = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/p").text # LOCATION OF COLLEGE
-		try:
-			self.collegeName = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/h1").text	# NAME OF COLLEGE
-		except:
-			self.collegeName = driver.find_element_by_css_selector("*[class^='citystate']").text()
+	#	for x in range(0,5):
+	#		try:
+			
+		self.collegeName = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/h1").text	# NAME OF COLLEGE
+	#		self.collegeName = driver.find_element_by_css_selector("*[class^='mainsidecontainer']").get_attribute('h1').text		
+
+		self.collegeLocation = driver.find_element_by_css_selector("*[class^='citystate']").text
 		
 		self.collegeTuition = driver.find_element_by_xpath("//*[@id='section1']/table/tbody/tr[2]/td").text # TUITION COST FOR COLLEGE
 
-		try:
-			self.collegeDesc = driver.find_element_by_xpath("//*[@id='cont_overview']/p").text #BRIEF DESCRIPTION OF COLLEGE
-		except: 
-			self.collegeDesc = driver.find_element_by_css_selector("*[class^='overviewtext']").text
-		##################################################################
+		self.collegeDesc = driver.find_element_by_xpath("//*[@id='cont_overview']/p").text #BRIEF DESCRIPTION OF COLLEGE
+		
+		self.collegeDesc = driver.find_element_by_css_selector("*[class^='overviewtext']").text
+
+		#	except:
+		#		print 'Error!  Trying again!'
+		#		time.sleep(2)
+		#		if x == 4:
+		#			print 'COULDNT FIND INFORMATION.  PLEASE REPORT!'
+		#			exit(1)
+		#		continue
+		##	else:
+		#		print 'Successfully found the information'
+		#		break
+		
+		#################################################################
+		print '\tOK'
 
 		######### SEPERATE DATA AND SEND TUITION TO FIND_LOAN FUNCTION #####################
 
-		self.collegeDir = self.collegeName.replace(' ', "'\'")
+		self.collegeDir = self.collegeName.replace(' ', "_")
+
 		self.collegeTuition = self.collegeTuition.split('$')
+
 		tuition = ''
+
 		tuitionTemp = self.collegeTuition[1]
+
 		tuitionTemp = tuitionTemp.replace(' ', "")
+
 		for char in tuitionTemp:
 			try:
 				works = int(char)
@@ -261,8 +278,8 @@ class college_scrapper (object):
 
 
 
-driver = webdriver.Firefox() # FOR VISUAL AND DEBUGGING
-#driver = webdriver.PhantomJS() # FOR FINAL VERSION
+#driver = webdriver.Firefox() # FOR VISUAL AND DEBUGGING
+driver = webdriver.PhantomJS() # FOR FINAL VERSION
 start = college_scrapper()
 
 prs = Presentation()

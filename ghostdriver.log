@@ -1,5 +1,12 @@
-[INFO  - 2016-05-12T05:06:48.281Z] GhostDriver - Main - running on port 63846
-[INFO  - 2016-05-12T05:06:48.353Z] Session [5484d6b0-17ff-11e6-8648-4b5318b085a6] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":true,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1","webSecurityEnabled":true}
-[INFO  - 2016-05-12T05:06:48.353Z] Session [5484d6b0-17ff-11e6-8648-4b5318b085a6] - page.customHeaders:  - {}
-[INFO  - 2016-05-12T05:06:48.353Z] Session [5484d6b0-17ff-11e6-8648-4b5318b085a6] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"2.1.1","driverName":"ghostdriver","driverVersion":"1.2.0","platform":"mac-10.11 (El Capitan)-64bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
-[INFO  - 2016-05-12T05:06:48.353Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: 5484d6b0-17ff-11e6-8648-4b5318b085a6
+[INFO  - 2016-05-12T06:41:59.578Z] GhostDriver - Main - running on port 51252
+[INFO  - 2016-05-12T06:42:00.013Z] Session [a0ef2480-180c-11e6-bc2a-07f065e44b66] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":true,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1","webSecurityEnabled":true}
+[INFO  - 2016-05-12T06:42:00.013Z] Session [a0ef2480-180c-11e6-bc2a-07f065e44b66] - page.customHeaders:  - {}
+[INFO  - 2016-05-12T06:42:00.013Z] Session [a0ef2480-180c-11e6-bc2a-07f065e44b66] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"2.1.1","driverName":"ghostdriver","driverVersion":"1.2.0","platform":"mac-10.11 (El Capitan)-64bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
+[INFO  - 2016-05-12T06:42:00.013Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: a0ef2480-180c-11e6-bc2a-07f065e44b66
+events.js:141
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read EIO
+    at exports._errnoException (util.js:870:11)
+    at TTY.onread (net.js:552:26)
