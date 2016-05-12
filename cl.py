@@ -23,22 +23,39 @@ def find_loan (tuition, rate):
 	return loan_rates
 
 class powerpoint (object):
+	
+	def __init__(self):
 
-	def setup (self): # Sets up front page
+		###########################################################################
+		#	 FIRST TIME RUN TO CREATE PRESENTATION AND MAKE DIRECTORY	  # 
+		###########################################################################
+
+		os.system('mkdir -p ~/Desktop/College_Loan_Presentations/' + start.collegeDir)		
+		
 		title_page_layout = prs.slide_layouts[0] #Creates
 		title_slide = prs.slides.add_slide(title_page_layout)
 		title_page_title = title_slide.shapes.title
 		title_page_subtitle = title_slide.placeholders[1]
-
 		title_page_title.text = 'College Loan Project'
 		title_page_subtitle.text = 'Programmed by Heyaw Meteke'
+	
 		
-	def export (self,file_name): # Saves and exports file to folder
-		file_name = 'Presentation/' + file_name + '.pptx'
+		###########################################################################
+		#	EACH FUNCTION CREATES PART OF POWER POINT PRESENTATION		  #
+		###########################################################################
+
+		self.add_image_page()
+		self.add_info_page()
+		self.add_cost_page()
+		self.export()
+
+	
+	def export (self): # Saves and exports file to folder
+		name = start.collegeName
+		file_name = '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + name + '.pptx'
 		prs.save(file_name)
 
 	def add_image_page(self):
-		image_path = start.collegeImageDir
 		image_page_layout = prs.slide_layouts[6]
 		image_slide =prs.slides.add_slide(image_page_layout)
 		
@@ -46,12 +63,17 @@ class powerpoint (object):
 		height = Inches(5.5)
 		left = Inches(2)
 	
-		img = image_slide.shapes.add_picture(image_path, left, top, height)
-	def add_info_page (self, name, location, desc):
+		img = image_slide.shapes.add_picture(start.collegeImageDir, left, top, height)
+	def add_info_page (self):
+		
+		name = start.collegeName
+		location = start.collegeLocation
+		desc = start.collegeDesc
+
 		info_page_layout = prs.slide_layouts[1]
 		info_slide = prs.slides.add_slide(info_page_layout)
 		modules = info_slide.shapes
-		
+	
 		title_info_page = modules.title
 		body_info_page = modules.placeholders[1]
 		
@@ -64,7 +86,10 @@ class powerpoint (object):
 		p.text = desc
 		p.font.size = Pt(15)
 	
-	def add_cost_page (self, loan_table, tuition):
+	def add_cost_page (self):
+		loan_table = start.loan_table
+		tuition = start.collegeTuition
+
 		table_page_layout = prs.slide_layouts[5]
 		table_slide = prs.slides.add_slide(table_page_layout)
 		modules = table_slide.shapes
@@ -94,16 +119,21 @@ class college_scrapper (object):
 	collegeLocation = ''
 	collegeTuition = 0
 	collegeDesc = ''' '''
+	collegDir = ''
 	loan_table = {}
 	url = ''
 	def __init__ (self):
 		os.system('clear')
-		test = 'sdasd'
-		test.center(40)
+		
 		print '\t\t\tCollege Loan Algebra Project'
 		print '\t\t\tProgrammed by Heyaw Meteke'	
+		
+		driver.get('http://www.google.com')
 		driver.set_window_size(1440, 900)
-		driver.get('https://www.google.com/')	
+	
+	
+		self.college_search()
+		self.get_image()
 
         def get_image (self):
 		image_url = ''
@@ -129,20 +159,17 @@ class college_scrapper (object):
 		try:
 	
 			image_url = driver.find_element_by_css_selector("*[class^='button2 button2_theme_action button2_size_m button2_type_link button2_pin_brick-clear button2_width_max sizes__download i-bem button2_js_inited']").get_attribute('href')
-	
+
 		except:
 			print "First method didnt work, going to second one"
 			image_url = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[2]/div[1]/div[2]/div[1]/a").get_attribute('href')	
-		#except:
-		#	print 'Taking longer than usual...  Slow internet?'
-		#	time.sleep(2)
-		#	image_url = driver.find_element_by_css_selector("*[class^='irc_but_t']").text
 
 		
 		print 'Downloading Image...'
-		driver.get(image_url)
+		print image_url
 		try:
-			self.collegeImageDir =  'Presentation/image.jpg'
+
+			self.collegeImageDir =  '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + 'image.png'
 			photo = open(self.collegeImageDir, 'wb')
 			photo.write(requests.get(image_url).content)
 			photo.close()
@@ -150,29 +177,35 @@ class college_scrapper (object):
 
 		except:
 			print 'Error downloading image'
+			print 'Placeholder is placed.  You can change it when editing file.'
+			
+			### THIS LINE DOESNT WORK
+			#self.collegeImageDir = '~/Programs/College-Loan-Web-Scrapper/placeholder.png'
+			#### DIRECTORY NOT FOUND ^ FIX !!!!
 
-#		download_command = download_command + 
-#		os.system(download_command)
-		
+			### REPLACEMENT FOR TIME BEING
+			self.collegeImageDir = 'placeholder.png'		
+
 	def college_search (self):
 
 		college_input = raw_input('College: ')
-		college_input = college_input + ' college data'
-		
+		college_input += ' college data'
+		print 'Loading...'
+
+		time.sleep(2)
 		search_college = driver.find_element_by_name('q')
 		search_college.clear()
 		search_college.send_keys(college_input)
 		search_college.send_keys(Keys.RETURN)
-		print 'Searching..'
-
-		#for tries in range(1, 10):
-		#try:	
-		time.sleep(5)
+		print 'Searching...'
+		
+		time.sleep(3)
+		
 		try:
 			driver.find_element_by_partial_link_text('CollegeData').click()
 		except:
-			print 'Taking longer than usual... Slow internet?'
-			
+			print 'Taking longer than usual... Slow internet?(1)'
+			time.sleep(3)
 			driver.get('www.google.com')
 			search_college = driver.find_element_by_name('q')
         	        search_college.clear()
@@ -185,15 +218,17 @@ class college_scrapper (object):
 		try:
 			print  driver.find_element_by_css_selector("*[class^='pagetitle']").text
 		except:
-			print 'Taking longer than usual... Slow internet?'
+			print 'Taking longer than usual... Slow internet?(2)'
 			time.sleep(5)
 			print  driver.find_element_by_css_selector("*[class^='pagetitle']").text
 		finally:
 			print 'Successfully found information'
 
-		driver.save_screenshot('screenshot.png')		
+
+		##################################################################
+		#           		FIND COLLEGE INFORMATION 		 #
+		##################################################################
 		
-		############### FIND COLLEGE INFORMATION #########################
 		self.collegeLocation = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/p").text # LOCATION OF COLLEGE
 		try:
 			self.collegeName = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/h1").text	# NAME OF COLLEGE
@@ -209,6 +244,8 @@ class college_scrapper (object):
 		##################################################################
 
 		######### SEPERATE DATA AND SEND TUITION TO FIND_LOAN FUNCTION #####################
+
+		self.collegeDir = self.collegeName.replace(' ', "'\'")
 		self.collegeTuition = self.collegeTuition.split('$')
 		tuition = ''
 		tuitionTemp = self.collegeTuition[1]
@@ -221,18 +258,12 @@ class college_scrapper (object):
 				pass
 		self.collegeTuition = int(tuition)
 		self.loan_table = find_loan(self.collegeTuition, .04)
-		#print self.loan_table
 
+
+
+driver = webdriver.Firefox() # FOR VISUAL AND DEBUGGING
+#driver = webdriver.PhantomJS() # FOR FINAL VERSION
+start = college_scrapper()
 
 prs = Presentation()
-powerpoint().setup()
-#prs.save('test.pptx')
-
-driver = webdriver.Firefox()
-start = college_scrapper()
-start.college_search()
-start.get_image()
-powerpoint().add_image_page()
-powerpoint().add_info_page(start.collegeName, start.collegeLocation, start.collegeDesc)
-powerpoint().add_cost_page(start.loan_table, start.collegeTuition)
-powerpoint().export(start.collegeName)
+p = powerpoint()
