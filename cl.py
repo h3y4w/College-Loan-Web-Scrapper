@@ -13,15 +13,30 @@ from selenium.webdriver.common.by import By #lets us search for elements
 from selenium.webdriver.common.keys import Keys #lets us enter keys into webdriver
 from selenium.webdriver.remote.webelement import WebElement 
 
-def find_loan (tuition, rate):
-	loan_rates = {}
-	owe = (tuition * rate)
-#	loan[0] = owe
-	for year in range(1,16):
-		loan = owe * year
-		full_price = (owe*year) + tuition
-		loan_rates[year] = full_price
-	return loan_rates
+class loan (object):
+        simple = { }
+        compound = { }
+        collegeTuition = start.collegeTuition
+        rate = 0.04
+
+        def __init__(self, rate):
+                self.rate = rate
+
+        def find_simple (self):
+                self.simple['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.rate) + '(year)'
+                
+                for year in range(1,11):
+                        if year == 1 or year == 5 or year == 10:
+                                full = self.collegeTuition * self.rate * year
+                                self.simple[year] = str(full)
+
+        def find_compound (self):
+                self.compound['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.rate) + ')^' + 'year)'
+                
+                for year in range(1, 11):
+                        if year == 1 or year == 5 or year == 10:
+                                full = self.collegeTuition * ( (self.rate+1) ** year)
+                                self.compound[year] = str(full)
 
 class powerpoint (object):
 	
@@ -89,12 +104,13 @@ class powerpoint (object):
 		p.font.size = Pt(15)
 	
 	def add_cost_page (self):
-		loan_table = start.loan_table
+
+		simple_loan = loan.simple
 		tuition = start.collegeTuition
 
 		table_page_layout = prs.slide_layouts[5]
-		table_slide = prs.slides.add_slide(table_page_layout)
-		modules = table_slide.shapes
+		simple_slide = prs.slides.add_slide(table_page_layout)
+		modules = compound_slide.shapes
 		
 		modules.title.text = 'Simple Interest'
 		
@@ -109,12 +125,13 @@ class powerpoint (object):
 		table.cell(0, 0).text = 'Year' 
 		table.cell(0, 1).text = 'Interest'
 		table.cell(0, 2).text = 'Balance'
-		for x in range(1,3):
+		for x in range(0,11):
 
-			table.cell(x, 0).text = str(x)
-			table.cell(x, 1).text = str(34)
-			table.cell(x, 2).text = str(loan_table[x])	
-			
+			if year == 1 or year == 5 or year == 10:
+				table.cell(x, 0).text = str(x)
+				table.cell(x, 1).text = str(simple_loan[x])
+				table.cell(x, 2).text = str(simple_loan[x]+start.collegeTuition)	
+				
 class college_scrapper (object):
 	collegeName = ''
 	collegeImageDir = ''
@@ -280,7 +297,10 @@ class college_scrapper (object):
 
 #driver = webdriver.Firefox() # FOR VISUAL AND DEBUGGING
 driver = webdriver.PhantomJS() # FOR FINAL VERSION
+
 start = college_scrapper()
+
+loan = loan()
 
 prs = Presentation()
 p = powerpoint()
