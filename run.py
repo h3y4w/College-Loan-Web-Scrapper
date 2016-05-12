@@ -1,16 +1,15 @@
 import os
 
 #########################
-#			#
+#LAZY			#
 #EASY SETUP FILE 	#
 #AUTOMATICALLY DELETES	#
 #AFTER SUCCESSFUL	#
 #INSTALL		#
 #########################
-for x in range(0,2):
-	
-	try:
-		os.system('sudo pip install pyinstaller')
-		os.system('pyinstaller --onefile cl.py')
-	except:
-		os.system('sudo easy_install pip')
+
+
+os.system('/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"')
+os.system('brew install python')
+os.system('sudo pip install pyinstaller')
+os.system('pyinstaller --onefile cl.py')
