@@ -1,11 +1,11 @@
-### GET IMAGE SCRAPER TO WORK
 ### SET UP DATA TABLE FOR POWER POINT
 
 from pptx import Presentation #lets us create presentation
 from pptx.util import Inches, Pt #lets us get pptx fonts, measurements etc
 import time #lets us pause for a certain time
-import requests # lets us download image from url
-import urllib
+from pydrive.drive import GoogleDrive #Lets us upload to google drive
+from pydrive.auth import GoogleAuth # Authentication for google account
+import urllib # lets us download image from url
 import os # lets us execute console commands
 from datetime import datetime  
 from selenium import webdriver #lets us search the web
@@ -16,17 +16,20 @@ from selenium.webdriver.remote.webelement import WebElement
 class loan (object):
         simple = { }
         compound = { }
-        collegeTuition = start.collegeTuition
+        collegeTuition = 0
         rate = 0.04
 
-        def __init__(self, rate):
+        def __init__(self, rate, tuition):
+		self.collegeTuition = tuition
                 self.rate = rate
+		print 'Calculating Loans...',
+		self.find_simple()
 
         def find_simple (self):
                 self.simple['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.rate) + '(year)'
                 
-                for year in range(1,11):
-                        if year == 1 or year == 5 or year == 10:
+                for year in range(0, 6):
+                        if year >= 0 and year <= 5:
                                 full = self.collegeTuition * self.rate * year
                                 self.simple[year] = str(full)
 
@@ -41,12 +44,11 @@ class loan (object):
 class powerpoint (object):
 	
 	def __init__(self):
-
+		print 'Creating Slides...',
 		###########################################################################
 		#	 FIRST TIME RUN TO CREATE PRESENTATION AND MAKE DIRECTORY	  # 
 		###########################################################################
 
-		os.system('mkdir -p ~/Desktop/College_Loan_Presentations/' + start.collegeDir)		
 		
 		title_page_layout = prs.slide_layouts[0] #Creates
 		title_slide = prs.slides.add_slide(title_page_layout)
@@ -67,10 +69,37 @@ class powerpoint (object):
 
 	
 	def export (self): # Saves and exports file to folder
+		print '\tOK'
+		gauth = GoogleAuth()
+		gauth.LoadCredentialsFile("creds.txt")
+		if gauth.credentials is None:
+			gauth.LocalWebserverAuth()
+		
+		elif gauth.access_token_expired:
+			gauth.Refresh()
+
+		else:
+			gauth.Authorize()
+
+		gauth.SaveCredentialsFile("creds.txt")
+		gdrive = GoogleDrive(gauth)
+		
 		name = start.collegeName
-		#file_name = '~/Desktop/College_Loan_Presentations/' + start.collegeDir + '/' + 'slide.pptx'
-		#prs.save(os.path.join(file_name))
-		prs.save('slides.pptx')		
+
+			prs.save('slides.pptx')
+		
+		try:
+			print 'Uploading File...',
+			presentation_file = gdrive.CreateFile()
+			presentation_file.SetContentFile('slides.pptx')
+			presentation_file.Upload()
+			print '\tOK'
+		
+		except:
+			print 'ERROR! FILE COULD NOT UPLOAD!!!'
+
+		os.system('rm slides.pptx')
+		os.system('rm image.png')
 
 	def add_image_page(self):
 		image_page_layout = prs.slide_layouts[6]
@@ -79,30 +108,42 @@ class powerpoint (object):
 		top = Inches(1)
 		height = Inches(5.5)
 		left = Inches(2)
-	
-		img = image_slide.shapes.add_picture(start.collegeImageDir, left, top, height)
-	def add_info_page (self):
 		
-		name = start.collegeName
-		location = start.collegeLocation
-		desc = start.collegeDesc
+		for tries in range (0,3):
 
-		info_page_layout = prs.slide_layouts[1]
-		info_slide = prs.slides.add_slide(info_page_layout)
-		modules = info_slide.shapes
+			try:
+				img = image_slide.shapes.add_picture(start.collegeImageDir, left, top, height)
+
+
+			except:
+				print 'Image is corrupted, adding placeholder.'
+				img = 'placeholder.png'	
 	
-		title_info_page = modules.title
-		body_info_page = modules.placeholders[1]
+			else:
+				break
+
+	def add_info_page (self):
+			
+			name = start.collegeName
+			location = start.collegeLocation
+			desc = start.collegeDesc
+
+			info_page_layout = prs.slide_layouts[1]
+			info_slide = prs.slides.add_slide(info_page_layout)
+			modules = info_slide.shapes
 		
-		title_info_page.text = name
+			title_info_page = modules.title
+			body_info_page = modules.placeholders[1]
+			
+			title_info_page.text = name
+			
+			textbox = body_info_page.text_frame
+			textbox.text = 'Location: ' + location
+			
+			p = textbox.add_paragraph()
+			p.text = desc
+			p.font.size = Pt(15)
 		
-		textbox = body_info_page.text_frame
-		textbox.text = 'Location: ' + location
-		
-		p = textbox.add_paragraph()
-		p.text = desc
-		p.font.size = Pt(15)
-	
 	def add_cost_page (self):
 
 		simple_loan = loan.simple
@@ -110,11 +151,11 @@ class powerpoint (object):
 
 		table_page_layout = prs.slide_layouts[5]
 		simple_slide = prs.slides.add_slide(table_page_layout)
-		modules = compound_slide.shapes
+		modules = simple_slide.shapes
 		
 		modules.title.text = 'Simple Interest'
 		
-		rows = 3
+		rows = 7
 		cols = 3
 		left = top = Inches(2.0)
 		width = Inches(6.0)
@@ -122,16 +163,22 @@ class powerpoint (object):
 
 		table = modules.add_table(rows, cols, left, top, width, height).table
 		
+
 		table.cell(0, 0).text = 'Year' 
 		table.cell(0, 1).text = 'Interest'
 		table.cell(0, 2).text = 'Balance'
-		for x in range(0,11):
+		counter = 1
+		
+		tuition = int(tuition)
 
-			if year == 1 or year == 5 or year == 10:
-				table.cell(x, 0).text = str(x)
-				table.cell(x, 1).text = str(simple_loan[x])
-				table.cell(x, 2).text = str(simple_loan[x]+start.collegeTuition)	
-				
+		for year in range(0,6):
+			if year >= 0 and year <= 5 :
+				table.cell(counter, 0).text = str(year)
+				table.cell(counter, 1).text = str(simple_loan[year]) 
+				table.cell(counter, 2).text = str(float(simple_loan[year])+tuition) 
+				counter+=1				
+
+
 class college_scrapper (object):
 	collegeName = ''
 	collegeImageDir = ''
@@ -162,13 +209,16 @@ class college_scrapper (object):
 		search_image.send_keys('logo ' + self.collegeName)
 		search_image.send_keys(Keys.RETURN)
 
-	
-	#	try:
-		time.sleep(4)
-		print 'Searching for Image...'
-		temp_image_url = driver.find_element_by_css_selector("*[class^='serp-item__link']").get_attribute('href')
-		driver.get(temp_image_url)
 		
+		try:
+			time.sleep(4)
+			print 'Searching for Image...',
+			temp_image_url = driver.find_element_by_css_selector("*[class^='serp-item__link']").get_attribute('href')
+			driver.get(temp_image_url)
+		except:
+			time.sleep(3)
+			temp_image_url = driver.find_element_by_css_selector("*[class^='serp-item__link']").get_attribute('href')
+			driver.get(temp_image_url)
 		try:
 			#Makes sure to close pop up if its open
 			driver.find_element_by_css_selector("*[class^='popup__content']").click()
@@ -183,6 +233,7 @@ class college_scrapper (object):
 			print "First method didnt work, going to second one"
 			image_url = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[2]/div[1]/div[2]/div[1]/a").get_attribute('href')	
 
+		print '\tOK'
 		
 		print 'Downloading Image...',
 #		try:
@@ -197,47 +248,34 @@ class college_scrapper (object):
 		photo.retrieve(image_url, 'image.png')
 		print '\tOK'
 
-#		except:
-
-#			print 'Error downloading image'
-#			print 'Placeholder is placed.  You can change it when editing file.'
-#			
-#			### THIS LINE DOESNT WORK
-#			#self.collegeImageDir = '~/Programs/College-Loan-Web-Scrapper/placeholder.png'
-#			#### DIRECTORY NOT FOUND ^ FIX !!!!
-#
-#			### REPLACEMENT FOR TIME BEING
-#			self.collegeImageDir = 'placeholder.png'		
-
 	def college_search (self):
 
-		college_input = raw_input('College: ')
+#		college_input = raw_input('College: ')
+		college_input = 'university of San francisco'
 		college_input += ' college data'
-		print 'Loading...',
+		print 'Loading Program...',
 
 		time.sleep(2)
 		search_college = driver.find_element_by_name('q')
-		search_college.clear()
 		search_college.send_keys(college_input)
 		search_college.send_keys(Keys.RETURN)
 		print '\tOK'
-		print 'Searching and collecting info...',
+		print 'Searching for info...',
 		
 		time.sleep(3)
 		
-		try:
-			driver.find_element_by_partial_link_text('CollegeData').click()
-
-		except:
-			print 'Taking longer than usual... Slow internet?(1)'
-			time.sleep(3)
-			driver.get('www.google.com')
-			search_college = driver.find_element_by_name('q')
-        	        search_college.clear()
-                	search_college.send_keys(college_input)
-                	search_college.send_keys(Keys.RETURN)
-
-			driver.find_element_by_partial_link_text('CollegeData').click()
+		#try:
+		driver.find_element_by_partial_link_text('CollegeData').click()
+		#except:
+#			print 'Taking longer than usual... Slow internet?(1)'
+#			time.sleep(3)
+#			driver.get('www.google.com')
+#			search_college = driver.find_element_by_name('q')
+ #  #     	        search_college.clear()
+ ##               	search_college.send_keys(college_input)
+ #               	search_college.send_keys(Keys.RETURN)
+#
+		#	driver.find_element_by_partial_link_text('CollegeData').click()
 		time.sleep(5)		
 
 
@@ -291,16 +329,14 @@ class college_scrapper (object):
 			except:
 				pass
 		self.collegeTuition = int(tuition)
-		self.loan_table = find_loan(self.collegeTuition, .04)
 
 
-
-#driver = webdriver.Firefox() # FOR VISUAL AND DEBUGGING
 driver = webdriver.PhantomJS() # FOR FINAL VERSION
 
 start = college_scrapper()
 
-loan = loan()
+loan = loan(.04,start.collegeTuition)
+print '\tOK'
 
-prs = Presentation()
-p = powerpoint()
+prs = Presentation() # Creates slide
+p = powerpoint() # organizes slide
