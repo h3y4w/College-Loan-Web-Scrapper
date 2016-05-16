@@ -5,7 +5,8 @@ from pptx.util import Inches, Pt #lets us get pptx fonts, measurements etc
 import time #lets us pause for a certain time
 from pydrive.drive import GoogleDrive #Lets us upload to google drive
 from pydrive.auth import GoogleAuth # Authentication for google account
-import urllib # lets us download image from url
+import urllib # lets us download image from ur
+import urllib2
 import os # lets us execute console commands
 from datetime import datetime  
 from selenium import webdriver #lets us search the web
@@ -14,32 +15,38 @@ from selenium.webdriver.common.keys import Keys #lets us enter keys into webdriv
 from selenium.webdriver.remote.webelement import WebElement 
 
 class loan (object):
-        simple = { }
-        compound = { }
-        collegeTuition = 0
-        rate = 0.04
-
-        def __init__(self, rate, tuition):
-		self.collegeTuition = tuition
-                self.rate = rate
+        simple = {'rate': 0.04}
+        compound = {'rate': 1.0581}
+	collegeTuition = 0
+        def __init__(self, tuition):
 		print 'Calculating Loans...',
-		self.find_simple()
+		self.collegeTuition = tuition
+		self.find_interest()
 
-        def find_simple (self):
-                self.simple['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.rate) + '(year)'
-                
+        def find_interest (self):
+
+		##############################################################################
+		############## FINDS INTEREST FOR BOTH COMPOUND AND SIMPLE ###################
+		##############################################################################
+
+                self.simple['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.simple['rate']) + '(year)'
+		self.compound['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.compound['rate']) + ')^' + 'year)'
+
+            
                 for year in range(0, 6):
                         if year >= 0 and year <= 5:
-                                full = self.collegeTuition * self.rate * year
+
+				# FINDS simple interest
+                                full = self.collegeTuition * self.simple['rate'] * year
                                 self.simple[year] = str(full)
 
-        def find_compound (self):
-                self.compound['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.rate) + ')^' + 'year)'
-                
-                for year in range(1, 11):
-                        if year == 1 or year == 5 or year == 10:
-                                full = self.collegeTuition * ( (self.rate+1) ** year)
-                                self.compound[year] = str(full)
+				#FINDS compound interest
+				full = self.collegeTuition * ( (self.compound['rate']) ** year)
+				self.compound[year] = str(full)
+			else:
+				pass
+
+		print '\tOK'
 
 class powerpoint (object):
 	
@@ -53,7 +60,7 @@ class powerpoint (object):
 		title_page_layout = prs.slide_layouts[0] #Creates
 		title_slide = prs.slides.add_slide(title_page_layout)
 		title_page_title = title_slide.shapes.title
-		title_page_subtitle = title_slide.placeholders[1]
+		title_page_subtitle = title_slide.placeholders[1]		
 		title_page_title.text = 'College Loan Project'
 		title_page_subtitle.text = 'Programmed by Heyaw Meteke'
 	
@@ -68,10 +75,15 @@ class powerpoint (object):
 		self.export()
 
 	
-	def export (self): # Saves and exports file to folder
-		print '\tOK'
+	def export (self): 
+		
+		######################################################
+		########## EXPORTS FILE TO GOOGLE DRIVE ##############
+		#####################################################		
+
 		gauth = GoogleAuth()
 		gauth.LoadCredentialsFile("creds.txt")
+
 		if gauth.credentials is None:
 			gauth.LocalWebserverAuth()
 		
@@ -85,26 +97,38 @@ class powerpoint (object):
 		gdrive = GoogleDrive(gauth)
 		
 		name = start.collegeName
-
-			prs.save('slides.pptx')
-		
+		folder_id = '0B22isVxRZHa5aG1nMWpkQzdZRzQ'
+		prs.save('slides.pptx')
+			
 		try:
 			print 'Uploading File...',
-			presentation_file = gdrive.CreateFile()
+			presentation_file = gdrive.CreateFile({'title':name, 'parents': [{'kind': 'drive#fileLink', 'id': folder_id}]})
 			presentation_file.SetContentFile('slides.pptx')
 			presentation_file.Upload()
 			print '\tOK'
 		
+			print 'Cleaning Up Files...',
+			os.system('rm slides.pptx')
+			os.system('rm image.png')
+			print '\tOK'
+			print 'Copy and paste the following link to go to folder'
+			print 'LINK: https://goo.gl/akeZ3q'	
+		
 		except:
 			print 'ERROR! FILE COULD NOT UPLOAD!!!'
+			print 'File is in program directory.'
 
-		os.system('rm slides.pptx')
-		os.system('rm image.png')
 
 	def add_image_page(self):
+		
+		#########################################################
+		############# CREATES AND SETS IMAGE PAGE ###############
+		########################################################
+
 		image_page_layout = prs.slide_layouts[6]
 		image_slide =prs.slides.add_slide(image_page_layout)
-		
+		image_path = 'image.png'
+	
 		top = Inches(1)
 		height = Inches(5.5)
 		left = Inches(2)
@@ -112,7 +136,7 @@ class powerpoint (object):
 		for tries in range (0,3):
 
 			try:
-				img = image_slide.shapes.add_picture(start.collegeImageDir, left, top, height)
+				img = image_slide.shapes.add_picture(image_path, left, top, height=height)
 
 
 			except:
@@ -123,61 +147,108 @@ class powerpoint (object):
 				break
 
 	def add_info_page (self):
-			
-			name = start.collegeName
-			location = start.collegeLocation
-			desc = start.collegeDesc
 
-			info_page_layout = prs.slide_layouts[1]
-			info_slide = prs.slides.add_slide(info_page_layout)
-			modules = info_slide.shapes
+		#######################################################################
+		################## CREATES AND SETS INFORMATION PAGE ##################
+		######################################################################		
+				
+		name = start.collegeName
+		location = start.collegeLocation
+		desc = start.collegeDesc
+
+		info_page_layout = prs.slide_layouts[1]
+		info_slide = prs.slides.add_slide(info_page_layout)
+		modules = info_slide.shapes
+	
+		title_info_page = modules.title
+		body_info_page = modules.placeholders[1]
 		
-			title_info_page = modules.title
-			body_info_page = modules.placeholders[1]
-			
-			title_info_page.text = name
-			
-			textbox = body_info_page.text_frame
-			textbox.text = 'Location: ' + location
-			
-			p = textbox.add_paragraph()
-			p.text = desc
-			p.font.size = Pt(15)
+		title_info_page.text = name
 		
+		textbox = body_info_page.text_frame
+		textbox.text = 'Location: ' + location
+		
+		p = textbox.add_paragraph()
+		p.text = desc
+		p.font.size = Pt(15)
+	
 	def add_cost_page (self):
 
+		################################################################################################
+		################### CREATES AND SETS TABLES FOR COMPOUND AND SIMPLE INTEREST####################
+		################################################################################################
+
 		simple_loan = loan.simple
+		compound_loan = loan.compound
+
 		tuition = start.collegeTuition
 
+		#CREATES SLIDE FOR BOTH COMPOUND AND SIMPLE
 		table_page_layout = prs.slide_layouts[5]
 		simple_slide = prs.slides.add_slide(table_page_layout)
-		modules = simple_slide.shapes
+		compound_slide = prs.slides.add_slide(table_page_layout)
+
+
+		#ssubtitle = simple_slide.placeholders[1]
+		#csubtitle = compound_slide.placeholders[1]
 		
-		modules.title.text = 'Simple Interest'
+		left = top = height = Inches(1)
+		width = Inches(2)
+		ss_txBox = simple_slide.shapes.add_textbox(left, top, width, height)
+		ss_tf = ss_txBox.text_frame
+		
+	
+		modules_simple = simple_slide.shapes
+		modules_compound = compound_slide.shapes
+
+
+		# ADDS TITLE FOR BOTH COMPOUND AND SIMPLE SLIDES
+		modules_simple.title.text = 'Simple Interest'
+		ss_tf.text = simple_loan['equation']
+
+		modules_compound.title.text = 'Compound Interest'
+		#csubtitle.text = compound_loan['equation']
 		
 		rows = 7
 		cols = 3
 		left = top = Inches(2.0)
 		width = Inches(6.0)
 		height = Inches(0.8)
-
-		table = modules.add_table(rows, cols, left, top, width, height).table
 		
-
-		table.cell(0, 0).text = 'Year' 
-		table.cell(0, 1).text = 'Interest'
-		table.cell(0, 2).text = 'Balance'
+		# CREATES BOTH COMPOUND AND SIMPLE TABLE
+		simple_table = modules_simple.add_table(rows, cols, left, top, width, height).table
+		compound_table = modules_compound.add_table(rows, cols, left, top, width, height).table		
+		
+		# SETS HEADER FOR BOTH COMPOUND AND SIMPLE TABLE
+		compound_table.cell(0, 0).text = simple_table.cell(0, 0).text = 'Year' 
+		compound_table.cell(0, 1).text = simple_table.cell(0, 1).text = 'Interest'
+		compound_table.cell(0, 2).text = simple_table.cell(0, 2).text = 'Balance'
+		
 		counter = 1
 		
 		tuition = int(tuition)
 
 		for year in range(0,6):
+	
 			if year >= 0 and year <= 5 :
-				table.cell(counter, 0).text = str(year)
-				table.cell(counter, 1).text = str(simple_loan[year]) 
-				table.cell(counter, 2).text = str(float(simple_loan[year])+tuition) 
+				# ADDS VALUES FOR SIMPLE TABLE
+				simple_table.cell(counter, 0).text = str(year)
+				simple_table.cell(counter, 1).text = str(simple_loan[year]) 
+				simple_table.cell(counter, 2).text = str(round(float(simple_loan[year])+tuition, 2))
+			
+				# ADDS VALUES FOR COMPOUND TABLE
+				compound_table.cell(counter, 0).text = str(year)
+
+				if isinstance(compound_loan[year], basestring):
+					compound_loan[year] = float(compound_loan[year])
+
+
+				compound_table.cell(counter, 1).text = str(compound_loan[year]-tuition)
+				compound_table.cell(counter, 2).text = str(round(compound_loan[year], 2))
+				
 				counter+=1				
 
+		print '\tOK'
 
 class college_scrapper (object):
 	collegeName = ''
@@ -188,9 +259,11 @@ class college_scrapper (object):
 	collegDir = ''
 	loan_table = {}
 	url = ''
-	def __init__ (self):
+	name_search = ''
+	def __init__ (self, name_search):
 		os.system('clear')
-		
+		self.name_search = name_search
+
 		print '\t\t\tCollege Loan Algebra Project'
 		print '\t\t\tProgrammed by Heyaw Meteke'	
 		
@@ -232,85 +305,62 @@ class college_scrapper (object):
 		except:
 			print "First method didnt work, going to second one"
 			image_url = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[2]/div[1]/div[2]/div[1]/a").get_attribute('href')	
-
 		print '\tOK'
 		
 		print 'Downloading Image...',
-#		try:
 		
 		self.collegeImageDir =  'image.png'
-		#	print self.collegeImageDir
-		#	photo = open(self.collegeImageDir, 'wb')
-		#	photo.write(requests.get(image_url).content)
-		#	photo.close()
 
-		photo = urllib.URLopener()
-		photo.retrieve(image_url, 'image.png')
+		#photo = urllib2.urlopen(image_url)
+		urllib.urlretrieve(image_url, 'image.png')
 		print '\tOK'
 
 	def college_search (self):
 
-#		college_input = raw_input('College: ')
-		college_input = 'university of San francisco'
-		college_input += ' college data'
+		college_input = self.name_search + ' college data'
 		print 'Loading Program...',
 
 		time.sleep(2)
 		search_college = driver.find_element_by_name('q')
 		search_college.send_keys(college_input)
 		search_college.send_keys(Keys.RETURN)
-		print '\tOK'
-		print 'Searching for info...',
-		
 		time.sleep(3)
 		
-		#try:
 		driver.find_element_by_partial_link_text('CollegeData').click()
-		#except:
-#			print 'Taking longer than usual... Slow internet?(1)'
-#			time.sleep(3)
-#			driver.get('www.google.com')
-#			search_college = driver.find_element_by_name('q')
- #  #     	        search_college.clear()
- ##               	search_college.send_keys(college_input)
- #               	search_college.send_keys(Keys.RETURN)
-#
-		#	driver.find_element_by_partial_link_text('CollegeData').click()
+
 		time.sleep(5)		
 
-
-		##################################################################
-		#           		FIND COLLEGE INFORMATION 		 #
-		##################################################################
-	#	for x in range(0,5):
-	#		try:
-			
 		self.collegeName = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/h1").text	# NAME OF COLLEGE
 	#		self.collegeName = driver.find_element_by_css_selector("*[class^='mainsidecontainer']").get_attribute('h1').text		
 
 		self.collegeLocation = driver.find_element_by_css_selector("*[class^='citystate']").text
 		
-		self.collegeTuition = driver.find_element_by_xpath("//*[@id='section1']/table/tbody/tr[2]/td").text # TUITION COST FOR COLLEGE
+		self.collegeTuition = driver.find_element_by_xpath("//*[@id='section1']/table/tbody/tr[1]/td").text # TUITION COST FOR COLLEGE
 
-		self.collegeDesc = driver.find_element_by_xpath("//*[@id='cont_overview']/p").text #BRIEF DESCRIPTION OF COLLEGE
-		
-		self.collegeDesc = driver.find_element_by_css_selector("*[class^='overviewtext']").text
+		try:
+			self.collegeDesc = driver.find_element_by_xpath("//*[@id='cont_overview']/p").text #BRIEF DESCRIPTION OF COLLEGE
+			print '\tOK'
+			
+		except: #If it cant find desc on college data - goes to college board instead
+			print '\tERROR!'
+			print '==========================ERROR==========================================='
+			print 'Usual source does not have all information.  Checking other source instead'
+			print '==========================================================================\n'
+			driver.get('www.google.com')
+			time.sleep(2)
+			college_input = temp_college_input + ' college board'
+			search_college = driver.find_element_by_name('q')
+        	        search_college.send_keys(college_input)
+	                search_college.send_keys(Keys.RETURN)
+			time.sleep(3)
+			driver.find_element_by_partial_link_text('...').click()
+			time.sleep(3)
+			self.collegeDesc = driver.find_element_by_id("cpProfile_ataglance_collegeDescription_html").text # VERY SHORT DESCRIPTION
+	
 
-		#	except:
-		#		print 'Error!  Trying again!'
-		#		time.sleep(2)
-		#		if x == 4:
-		#			print 'COULDNT FIND INFORMATION.  PLEASE REPORT!'
-		#			exit(1)
-		#		continue
-		##	else:
-		#		print 'Successfully found the information'
-		#		break
-		
-		#################################################################
-		print '\tOK'
-
-		######### SEPERATE DATA AND SEND TUITION TO FIND_LOAN FUNCTION #####################
+		#####################################################################################
+		################# SEPERATE DATA AND TO SEND TUITION TO LOAN OBJECT ##################
+		#####################################################################################	
 
 		self.collegeDir = self.collegeName.replace(' ', "_")
 
@@ -331,12 +381,20 @@ class college_scrapper (object):
 		self.collegeTuition = int(tuition)
 
 
-driver = webdriver.PhantomJS() # FOR FINAL VERSION
-
-start = college_scrapper()
-
-loan = loan(.04,start.collegeTuition)
-print '\tOK'
-
-prs = Presentation() # Creates slide
-p = powerpoint() # organizes slide
+###########################################################################################
+################################## CREATES INSTANCES ######################################
+###########################################################################################
+name_search = raw_input('College: ')							###
+											###
+driver = webdriver.PhantomJS() # FOR FINAL VERSION					###
+											###
+start = college_scrapper(name_search) # STARTS WEB SCRAPPING				###				
+											###
+loan = loan(start.collegeTuition) # CALCULATES LOAN FOR BOTH COMPOUND AND SIMPLE	###
+											###
+prs = Presentation() # CREATES SLIDE INSTANCE						###
+											###
+p = powerpoint() # ADDS INFORMATION TO SLIDE						###
+###########################################################################################
+##################################### END #################################################
+###########################################################################################
