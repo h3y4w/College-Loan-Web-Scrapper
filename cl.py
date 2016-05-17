@@ -21,7 +21,7 @@ from selenium.webdriver.remote.webelement import WebElement
 # ALGEBRA 2
 # MS HELFT
 # E BLOCK
-
+#
 ############################################################################################################################################################
 ############################################################################################################################################################
 ############################################################################################################################################################
@@ -82,8 +82,10 @@ class powerpoint (object):
 		#	EACH FUNCTION CREATES PART OF POWER POINT PRESENTATION		  #
 		###########################################################################
 
+		self.add_project_page()
 		self.add_image_page()
 		self.add_info_page()
+		self.add_loan_page()
 		self.add_cost_page()
 		self.export()
 
@@ -155,9 +157,25 @@ class powerpoint (object):
 			except:
 				print 'Image is corrupted, adding placeholder.'
 				img = 'placeholder.png'	
-	
+				image = image_slide,shapes.add_pictures(image_path, left, top, height=height)	
 			else:
 				break
+
+	def add_project_page (self):
+		slide_layout = prs.slide_layouts[6]
+		project_slide = prs.slides.add_slide(slide_layout)
+		title = project_slide.shapes.title
+#		title.text = 'Loans'
+		
+		left = top = Inches(1)
+		width = height = Inches(8)
+		txBox = project_slide.shapes.add_textbox(left, top, width, height)
+		tf = txBox.text_frame
+		
+		temp_text = ''
+		with open('explain.txt') as f:
+			temp_text = f.readlines()
+		tf.text = unicode(''.join(temp_text), 'utf-8')
 
 	def add_info_page (self):
 
@@ -190,7 +208,31 @@ class powerpoint (object):
 		d.text = desc
 		d.font.size = Pt(15)
 		
-	
+	def add_loan_page (self):
+			
+		
+                slide_layout = prs.slide_layouts[6]
+                loan_slide = prs.slides.add_slide(slide_layout)
+                
+		left = top = Inches(1)
+                width = height = Inches(8)
+                txBox = loan_slide.shapes.add_textbox(left, top, width, height)
+                tf = txBox.text_frame
+
+                temp_text = ''
+                with open('loaninfo.txt') as f:
+                        temp_text = f.readlines()
+                temp_text = unicode(''.join(temp_text), 'utf-8')
+		
+		t = str(start.collegeTuition)
+		vocab = {1: start.collegeName, 2: t, 3: t, 4: t , 5: t, 6: t}
+		counter = 1
+		for char in temp_text:
+			if counter >=1 and counter <= 6:
+				index = temp_text.find('#')
+				temp_text = temp_text[:index-1] + vocab[counter] + temp_text[index+1:]		
+				counter +=1
+		tf.text = temp_text
 	def add_cost_page (self):
 
 		################################################################################################
@@ -204,17 +246,12 @@ class powerpoint (object):
 
 		#CREATES SLIDE FOR BOTH COMPOUND AND SIMPLE
 		table_page_layout = prs.slide_layouts[5]
+		
 		simple_slide = prs.slides.add_slide(table_page_layout)
 		compound_slide = prs.slides.add_slide(table_page_layout)
 
-
-		#ssubtitle = simple_slide.placeholders[1]
-		#csubtitle = compound_slide.placeholders[1]
-		
 		left = top = height = Inches(1)
 		width = Inches(2)
-		ss_txBox = simple_slide.shapes.add_textbox(left, top, width, height)
-		ss_tf = ss_txBox.text_frame
 		
 	
 		modules_simple = simple_slide.shapes
@@ -223,10 +260,9 @@ class powerpoint (object):
 
 		# ADDS TITLE FOR BOTH COMPOUND AND SIMPLE SLIDES
 		modules_simple.title.text = 'Simple Interest'
-		ss_tf.text = simple_loan['equation']
 
 		modules_compound.title.text = 'Compound Interest'
-		#csubtitle.text = compound_loan['equation']
+	#csubtitle.text = compound_loan['equation']
 		
 		rows = 7
 		cols = 3
