@@ -1,5 +1,3 @@
-### SET UP DATA TABLE FOR POWER POINT
-
 from pptx import Presentation #lets us create presentation
 from pptx.util import Inches, Pt #lets us get pptx fonts, measurements etc
 import time #lets us pause for a certain time
@@ -13,6 +11,21 @@ from selenium import webdriver #lets us search the web
 from selenium.webdriver.common.by import By #lets us search for elements
 from selenium.webdriver.common.keys import Keys #lets us enter keys into webdriver
 from selenium.webdriver.remote.webelement import WebElement 
+
+
+############################################################################################################################################################
+############################################################################################################################################################
+############################################################################################################################################################
+#
+# HEYAW METEKE
+# ALGEBRA 2
+# MS HELFT
+# E BLOCK
+
+############################################################################################################################################################
+############################################################################################################################################################
+############################################################################################################################################################
+
 
 class loan (object):
         simple = {'rate': 0.04}
@@ -33,7 +46,7 @@ class loan (object):
 		self.compound['equation'] = 'Interest = ' + str(self.collegeTuition) + '(' + str(self.compound['rate']) + ')^' + 'year)'
 
             
-                for year in range(0, 6):
+                for year in range(0, 6): #LOOP FINDS INTEREST FOR 6 YEARS 
                         if year >= 0 and year <= 5:
 
 				# FINDS simple interest
@@ -155,6 +168,7 @@ class powerpoint (object):
 		name = start.collegeName
 		location = start.collegeLocation
 		desc = start.collegeDesc
+		tuition = start.collegeTuition
 
 		info_page_layout = prs.slide_layouts[1]
 		info_slide = prs.slides.add_slide(info_page_layout)
@@ -167,10 +181,15 @@ class powerpoint (object):
 		
 		textbox = body_info_page.text_frame
 		textbox.text = 'Location: ' + location
+	
+		t = textbox.add_paragraph()
+		t.text = 'Tuition (Including fees/room and board): $' + str(tuition)
+		t.font.size = Pt(20)
+	
+		d = textbox.add_paragraph()
+		d.text = desc
+		d.font.size = Pt(15)
 		
-		p = textbox.add_paragraph()
-		p.text = desc
-		p.font.size = Pt(15)
 	
 	def add_cost_page (self):
 
@@ -239,7 +258,7 @@ class powerpoint (object):
 				# ADDS VALUES FOR COMPOUND TABLE
 				compound_table.cell(counter, 0).text = str(year)
 
-				if isinstance(compound_loan[year], basestring):
+				if isinstance(compound_loan[year], basestring): # checks if an interest is a string, if yes it changes to float
 					compound_loan[year] = float(compound_loan[year])
 
 
@@ -311,7 +330,6 @@ class college_scrapper (object):
 		
 		self.collegeImageDir =  'image.png'
 
-		#photo = urllib2.urlopen(image_url)
 		urllib.urlretrieve(image_url, 'image.png')
 		print '\tOK'
 
@@ -331,7 +349,6 @@ class college_scrapper (object):
 		time.sleep(5)		
 
 		self.collegeName = driver.find_element_by_xpath("//*[@id='collprofile']/div[6]/div[4]/div[2]/div[1]/h1").text	# NAME OF COLLEGE
-	#		self.collegeName = driver.find_element_by_css_selector("*[class^='mainsidecontainer']").get_attribute('h1').text		
 
 		self.collegeLocation = driver.find_element_by_css_selector("*[class^='citystate']").text
 		
@@ -348,14 +365,15 @@ class college_scrapper (object):
 			print '==========================================================================\n'
 			driver.get('www.google.com')
 			time.sleep(2)
-			college_input = temp_college_input + ' college board'
-			search_college = driver.find_element_by_name('q')
-        	        search_college.send_keys(college_input)
-	                search_college.send_keys(Keys.RETURN)
-			time.sleep(3)
-			driver.find_element_by_partial_link_text('...').click()
-			time.sleep(3)
-			self.collegeDesc = driver.find_element_by_id("cpProfile_ataglance_collegeDescription_html").text # VERY SHORT DESCRIPTION
+			college_input = self.name_search + ' college board'
+			driver.save_screenshot('SCREEN.png')
+			self.collegeDesc = driver.find_element_by_css_selector("*[class^='spotlighttext']").text
+			# search_college.send_keys(college_input)
+	                #search_college.send_keys(Keys.RETURN)
+			#time.sleep(3)
+			#driver.find_element_by_partial_link_text('...').click()
+			#time.sleep(3)
+			#self.collegeDesc = driver.find_element_by_id("cpProfile_ataglance_collegeDescription_html").text # VERY SHORT DESCRIPTION
 	
 
 		#####################################################################################
